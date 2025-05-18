@@ -1,6 +1,8 @@
 import java.io.File
+import java.lang.reflect.Field
 import java.lang.reflect.Modifier
 import kotlin.reflect.KClass
+import kotlin.reflect.KParameter
 
 val file = File("Test.yml")
 
@@ -42,6 +44,7 @@ private fun testFunction() {
 
 fun <T: Any> load(objects: Map<String, Any>, clazz: KClass<T>): T {
     val constructor = clazz.constructors.first()
+    val constructorParamNames = constructor.parameters.map(KParameter::name)
 
     val args = constructor.parameters.associateWith { param ->
         val name = param.name
@@ -50,11 +53,19 @@ fun <T: Any> load(objects: Map<String, Any>, clazz: KClass<T>): T {
             // Optional: handle nested deserialization here
             value
         } else {
-            null // or param.defaultValue if you want to support defaults
+            null
         }
     }
+//        .filterNot { it.value == null && it.key.isOptional } // Removes null assignment from optional parameters.
 
-    return constructor.callBy(args)
+    val constructed = constructor.callBy(args)
+
+    clazz.java.declaredFields
+        // Filter for unconstructed properties that we're prepared to load
+        .filter { it.name !in constructorParamNames && !Modifier.isFinal(it.modifiers) && objects.containsKey(it.name) }
+        .forEach { field -> field.withAccessible { set(constructed, objects[field.name]!!) } }
+
+    return constructed
 }
 
 fun <T: Any> deserialise(obj: T): Map<String, Any> {
@@ -66,10 +77,9 @@ fun <T: Any> deserialise(obj: T): Map<String, Any> {
         // Will not bother to 'remember' (non-constructor) final fields (vals) but will remember vars
         if (field.name !in constructorArgs && Modifier.isFinal(field.modifiers)) continue
 
-        val accessible = field.canAccess(obj)
-        field.isAccessible = true
-        map[field.name] = field.get(obj) ?: continue // TODO
-        field.isAccessible = accessible
+        field.withAccessible {
+            map[field.name] = field.get(obj)!! // TODO: I forgot but it's surely something
+        }
     }
 
     return map
@@ -79,4 +89,13 @@ fun <T: Any> deserialise(obj: T): Map<String, Any> {
 data class Mapped(val name: String, val hair: String, val age: Int) {
     val test = "INITIALISED"
     var health = 0.5
+}
+
+private fun Field.withAccessible(func: Field.() -> Unit) {
+    if (isAccessible) func(this)
+    else {
+        isAccessible = true
+        func(this)
+        isAccessible = false
+    }
 }
