@@ -11,12 +11,15 @@ repositories {
 
 dependencies {
     implementation(kotlin("reflect"))
+    implementation("org.yaml:snakeyaml:2.4")
+
     testImplementation(kotlin("test"))
 }
 
 tasks.test {
     useJUnitPlatform()
 }
+
 kotlin {
     jvmToolchain(17)
 }
