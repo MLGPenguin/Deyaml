@@ -1,3 +1,4 @@
+import java.lang.reflect.Array
 import java.lang.reflect.Field
 import java.lang.reflect.Modifier
 import kotlin.reflect.KClass
@@ -6,9 +7,9 @@ import kotlin.reflect.KParameter
 object Deyaml { // TODO: Convert to class with storage layer property
 
     /* TODO: stuff
+        - Lists/Arrays/Sets
         - Nested Objects
         - Maps
-        - Lists/Arrays/Sets
         - Bukkit Storage Layer (compileonly & testimpl)
      */
 
@@ -18,11 +19,19 @@ object Deyaml { // TODO: Convert to class with storage layer property
         val constructor = clazz.constructors.first()
 
         val constructorParamNames = constructor.parameters.map(KParameter::name)
+        println()
 
         val args = constructor.parameters.associateWith { param ->
             val name = param.name
             if (name != null && objects.containsKey(name)) {
-                val value = objects[name]
+                var value = objects[name]!!
+                // Handle Arrays being primitive and not holding types :|
+                if ((param.type.classifier as? KClass<*>)?.java?.isArray == true) {
+                    val componentType = (param.type.classifier as KClass<*>).java.componentType
+                    val array = Array.newInstance(componentType, (value as List<*>).size)
+                    value.forEachIndexed { index, element -> Array.set(array, index, element) }
+                    value = array
+                }
                 // Optional: handle nested deserialization here
                 value
             } else {

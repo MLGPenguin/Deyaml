@@ -1,9 +1,5 @@
 import Deyaml.deserialise
 import java.io.File
-import java.lang.reflect.Field
-import java.lang.reflect.Modifier
-import kotlin.reflect.KClass
-import kotlin.reflect.KParameter
 
 val file = File("Test.yml")
 

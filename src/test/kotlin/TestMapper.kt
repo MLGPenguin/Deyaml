@@ -42,6 +42,45 @@ class TestMapper {
         assertDoesNotThrow { Deyaml.load(map, TestObject::class) }
     }
 
+    @Test fun testLists() {
+        testIterable(TestIterables(listOf("Alex", "Dawson")))
+    }
+    
+    @Test fun testSets() {
+        testIterable(TestIterables(setOf("Alex", "Dawson")))
+    }
+    
+    @Test fun testArrays() {
+        val obj = TestArrays("Steve", arrayOf("Dawson", "Alex"))
+        val expectedyml = """
+            name: Steve
+            children:
+            - Dawson
+            - Alex
+        """.trimIndent()
+        
+        storageLayer.save(Deyaml.deserialise(obj), null)
+        assertEquals(expectedyml, storageLayer.ymlstring.trim())
+
+        val map = storageLayer.load(null)
+        assertEquals(obj, Deyaml.load(map, TestArrays::class))
+    }
+
+    fun <T : Collection<String>> testIterable(obj: TestIterables<T>) {
+        // Note the indentation of the children.
+        val expectedyml = """
+            children:
+            - Alex
+            - Dawson
+        """.trimIndent()
+        
+        storageLayer.save(Deyaml.deserialise(obj), null)
+        assertEquals(expectedyml, storageLayer.ymlstring.trim())
+
+        val map = storageLayer.load(null)
+        assertEquals(obj, Deyaml.load(map, TestIterables::class))
+    }
+
 
     class FakeYmlStorageLayer(): StorageLayer<String?> {
         val yml = Yaml()
@@ -57,9 +96,9 @@ class TestMapper {
     }
     data class TestObject(val name: String, val age: Int, var mutableProperty: Int = Random.nextInt(100)) {
         companion object {
-            val default = TestObject("Stephen", 41, 20)
+            val default = TestObject("Steve", 41, 20)
             val defaultYML = """
-                name: Stephen
+                name: Steve
                 age: 41
                 mutableProperty: 20
                 regularField: Jolly Good
@@ -67,6 +106,21 @@ class TestMapper {
         }
         val immutableProperty: String = "Hi!"
         var regularField: String = "Jolly Good"
+    }
+
+    data class TestIterables<T: Collection<String>>(val children: T)
+    data class TestArrays(val name: String, val children: Array<String>) {
+
+        override fun equals(other: Any?): Boolean {
+            return if (other !is TestArrays) false
+            else other.name == name &&  children.contentEquals(other.children)
+        }
+
+        override fun hashCode(): Int {
+            var result = name.hashCode()
+            result = 31 * result + children.contentHashCode()
+            return result
+        }
     }
 
 }
