@@ -5,7 +5,6 @@ import kotlin.reflect.KClass
 import kotlin.reflect.KParameter
 import kotlin.reflect.cast
 import kotlin.reflect.full.isSuperclassOf
-import kotlin.reflect.full.starProjectedType
 import kotlin.reflect.jvm.jvmErasure
 
 object Deyaml { // TODO: Convert to class with storage layer property
@@ -19,22 +18,13 @@ object Deyaml { // TODO: Convert to class with storage layer property
      */
 
     fun <T: Any> load(objects: Map<String, Any>, clazz: KClass<T>): T {
-//        if (Map::class.isSuperclassOf(clazz)) {
-//            val valueType = (clazz.java.genericSuperclass as? ParameterizedType)!!.actualTypeArguments[1]!! // NO WORK
-        // TODO: This would involve nesting which is currently outside of the scope of the project
-//            if () {
-        // TODO: Give up on maps for now.
-//            }
-
-//        }
-
         if (Map::class.isSuperclassOf(clazz)) {
             // Since objects is a Map<String, Any>, we assume the keys are strings and that the YML lib converted the rest :pray:
             // Definitely going to break once nesting starts :sob:
             return clazz.cast(objects)
         }
-        val constructor = clazz.constructors.first()
 
+        val constructor = clazz.constructors.first()
         val constructorParamNames = constructor.parameters.map(KParameter::name)
 
         val args = constructor.parameters.associateWith { param ->
@@ -81,10 +71,6 @@ object Deyaml { // TODO: Convert to class with storage layer property
             .forEach { field -> field.withAccessible { set(constructed, objects[field.name]!!) } }
 
         return constructed
-    }
-
-    private fun loadMap(map: Map<String, Any>) {
-
     }
 
     fun <T: Any> deserialise(obj: T): Map<String, Any> {
