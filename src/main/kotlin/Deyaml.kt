@@ -19,9 +19,9 @@ object Deyaml { // TODO: Convert to class with storage layer property
     fun <T: Any> load(objects: Map<String, Any>, clazz: KClass<T>): T {
 //        if (Map::class.isSuperclassOf(clazz)) {
 //            val valueType = (clazz.java.genericSuperclass as? ParameterizedType)!!.actualTypeArguments[1]!! // NO WORK
-            // TODO: This would involve nesting which is currently outside of the scope of the project
+        // TODO: This would involve nesting which is currently outside of the scope of the project
 //            if () {
-                // TODO: Give up on maps for now.
+        // TODO: Give up on maps for now.
 //            }
 
 //        }
@@ -31,40 +31,39 @@ object Deyaml { // TODO: Convert to class with storage layer property
 
         val args = constructor.parameters.associateWith { param ->
             val name = param.name
-            if (name != null && objects.containsKey(name)) {
-                var value = objects[name]!!
+            if (name == null || !objects.containsKey(name)) return@associateWith null
 
-                // Handle type conversions
-                when (param.type.jvmErasure) {
-                    Set::class -> value = (value as List<*>).toSet()
-                }
+            var value = objects[name]!!
 
-                // Handle Arrays being primitive and not holding types :|
-                if (param.type.jvmErasure.java.isArray) {
-                    val componentType = (param.type.classifier as KClass<*>).java.componentType
-                    val array = Array.newInstance(componentType, (value as List<*>).size)
-                    value.forEachIndexed { index, element -> Array.set(array, index, element) }
-                    value = array
-                }
-
-                // Handle Enums being unfriendly :(
-                if (param.type.jvmErasure.java.isEnum) {
-                    value = param.type.jvmErasure.java.enumConstants.first { (it as Enum<*>).name == value }
-                }
-
-                // Patch for primitive arrays
-                if (value is IntArray && param.type.arguments.isNotEmpty()) {
-                    value = Array<Int>(value.size) { value[it] }
-                }
-
-                // Optional: handle nested deserialization here
-
-                value
-            } else {
-                null
+            // Handle type conversions
+            when (param.type.jvmErasure) {
+                Set::class -> value = (value as List<*>).toSet()
             }
+
+            // Handle Arrays being primitive and not holding types :|
+            if (param.type.jvmErasure.java.isArray) {
+                val componentType = (param.type.classifier as KClass<*>).java.componentType
+                val array = Array.newInstance(componentType, (value as List<*>).size)
+                value.forEachIndexed { index, element -> Array.set(array, index, element) }
+                value = array
+            }
+
+            // Handle Enums being unfriendly :(
+            if (param.type.jvmErasure.java.isEnum) {
+                value = param.type.jvmErasure.java.enumConstants.first { (it as Enum<*>).name == value }
+            }
+
+            // Patch for primitive arrays
+            if (value is IntArray && param.type.arguments.isNotEmpty()) {
+                value = Array<Int>(value.size) { value[it] }
+            }
+
+            // Optional: handle nested deserialization here
+
+            value
         }
-        .filterNot { it.value == null && it.key.isOptional } // Removes null assignment from optional parameters.
+            // Removes null assignment from optional parameters so that defaults work.
+            .filterNot { it.value == null && it.key.isOptional }
 
         val constructed = constructor.callBy(args)
 
