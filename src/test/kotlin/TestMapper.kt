@@ -32,7 +32,7 @@ class TestMapper {
         assertDoesNotThrow { Deyaml.load(map, TestObject::class) }
     }
 
-    @Test fun testCollections() {
+    @Test fun testNonNestedCollections() {
         val yml = """
             list:
             - 1
@@ -53,8 +53,18 @@ class TestMapper {
         testIO(TestCollections(listOf(1, 2), setOf(3, 4), arrayOf("5", "6"), arrayOf(7, 8), intArrayOf(9, 10)), yml)
     }
 
-//    @Test fun testTopLevelMaps() {}
-//    @Test fun testMapsAsParameters() {}
+    @Test fun testNonNestedMapsAsParameters() {
+        val yml = """
+            map:
+              a: 1
+              b: 2
+        """.trimIndent()
+        testIO(TestMaps(mapOf("a" to 1, "b" to 2)), yml)
+    }
+
+    @Test fun testTopLevelNonNestedMaps() {
+        testIO(mapOf("a" to 1, "b" to 2), "a: 1\nb: 2")
+    }
 
 
     inline fun <reified T : Any> testIO(obj: T, expectedYml: String) {
@@ -106,6 +116,7 @@ class TestMapper {
         val immutableProperty: String = "Hi!"
         var regularField: String = "Jolly Good"
     }
+    data class TestMaps(val map: Map<String, Int>)
 
     class FakeYmlStorageLayer(): StorageLayer<String?> {
         val yml = SnakeYamlStorageLayer().yml

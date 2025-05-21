@@ -3,7 +3,9 @@ import java.lang.reflect.Field
 import java.lang.reflect.Modifier
 import kotlin.reflect.KClass
 import kotlin.reflect.KParameter
+import kotlin.reflect.cast
 import kotlin.reflect.full.isSuperclassOf
+import kotlin.reflect.full.starProjectedType
 import kotlin.reflect.jvm.jvmErasure
 
 object Deyaml { // TODO: Convert to class with storage layer property
@@ -25,6 +27,12 @@ object Deyaml { // TODO: Convert to class with storage layer property
 //            }
 
 //        }
+
+        if (Map::class.isSuperclassOf(clazz)) {
+            // Since objects is a Map<String, Any>, we assume the keys are strings and that the YML lib converted the rest :pray:
+            // Definitely going to break once nesting starts :sob:
+            return clazz.cast(objects)
+        }
         val constructor = clazz.constructors.first()
 
         val constructorParamNames = constructor.parameters.map(KParameter::name)
