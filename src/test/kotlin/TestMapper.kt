@@ -1,7 +1,6 @@
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
-import kotlin.jvm.java
 import kotlin.random.Random
 import kotlin.test.assertEquals
 
@@ -58,7 +57,6 @@ class TestMapper {
 //    @Test fun testMapsAsParameters() {}
 
 
-
     inline fun <reified T : Any> testIO(obj: T, expectedYml: String) {
         storageLayer.save(Deyaml.deserialise(obj), null)
         assertEquals(expectedYml, storageLayer.ymlstring.trim())
@@ -93,13 +91,15 @@ class TestMapper {
             return result
         }
     }
-    data class TestObject(val name: String, val age: Int, var mutableProperty: Int = Random.nextInt(100)) {
+    enum class TestEnums { HEAD, SHOULDERS, KNEES, TOES }
+    data class TestObject(val name: String, val age: Int, var mutableProperty: Int = Random.nextInt(100), val enumTest: TestEnums) {
         companion object {
-            val default = TestObject("Steve", 41, 20)
+            val default = TestObject("Steve", 41, 20, TestEnums.HEAD)
             val defaultYML = """
                 name: Steve
                 age: 41
                 mutableProperty: 20
+                enumTest: HEAD
                 regularField: Jolly Good
             """.trimIndent()
         }

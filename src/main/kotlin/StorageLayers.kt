@@ -1,5 +1,7 @@
 import org.yaml.snakeyaml.DumperOptions
+import org.yaml.snakeyaml.LoaderOptions
 import org.yaml.snakeyaml.Yaml
+import org.yaml.snakeyaml.constructor.Constructor
 import org.yaml.snakeyaml.nodes.Tag
 import org.yaml.snakeyaml.representer.Represent
 import org.yaml.snakeyaml.representer.Representer
@@ -55,8 +57,14 @@ class SnakeYamlStorageLayer(): StorageLayer<File> {
 
     class CustomRepresenter(): Representer(DumperOptions()) {
         init {
-            val represent = Represent { data -> representSequence(Tag.SEQ, (data as Set<*>).toList(), DumperOptions.FlowStyle.BLOCK) }
-            this.multiRepresenters.put(Set::class.java, represent)
+            val setRepresenter = Represent { data -> representSequence(Tag.SEQ, (data as Set<*>).toList(), DumperOptions.FlowStyle.BLOCK) }
+            val enumRepresenter = Represent { data -> representScalar(Tag.STR, (data as Enum<*>).toString()) }
+            this.multiRepresenters.putAll(arrayOf(
+                Set::class.java to setRepresenter,
+                Enum::class.java to enumRepresenter,
+            ))
         }
     }
+
+    class CustomConstructor : Constructor(LoaderOptions()) {}
 }

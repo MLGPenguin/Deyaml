@@ -17,14 +17,14 @@ object Deyaml { // TODO: Convert to class with storage layer property
      */
 
     fun <T: Any> load(objects: Map<String, Any>, clazz: KClass<T>): T {
-        if (Map::class.isSuperclassOf(clazz)) {
+//        if (Map::class.isSuperclassOf(clazz)) {
 //            val valueType = (clazz.java.genericSuperclass as? ParameterizedType)!!.actualTypeArguments[1]!! // NO WORK
             // TODO: This would involve nesting which is currently outside of the scope of the project
 //            if () {
                 // TODO: Give up on maps for now.
 //            }
 
-        }
+//        }
         val constructor = clazz.constructors.first()
 
         val constructorParamNames = constructor.parameters.map(KParameter::name)
@@ -34,7 +34,7 @@ object Deyaml { // TODO: Convert to class with storage layer property
             if (name != null && objects.containsKey(name)) {
                 var value = objects[name]!!
 
-                // Handle sets Initialising as lists
+                // Handle type conversions
                 when (param.type.jvmErasure) {
                     Set::class -> value = (value as List<*>).toSet()
                 }
@@ -45,6 +45,11 @@ object Deyaml { // TODO: Convert to class with storage layer property
                     val array = Array.newInstance(componentType, (value as List<*>).size)
                     value.forEachIndexed { index, element -> Array.set(array, index, element) }
                     value = array
+                }
+
+                // Handle Enums being unfriendly :(
+                if (param.type.jvmErasure.java.isEnum) {
+                    value = param.type.jvmErasure.java.enumConstants.first { (it as Enum<*>).name == value }
                 }
 
                 // Patch for primitive arrays
