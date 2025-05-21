@@ -1,4 +1,8 @@
+import org.yaml.snakeyaml.DumperOptions
 import org.yaml.snakeyaml.Yaml
+import org.yaml.snakeyaml.nodes.Tag
+import org.yaml.snakeyaml.representer.Represent
+import org.yaml.snakeyaml.representer.Representer
 import java.io.File
 
 interface StorageLayer<T> {
@@ -38,7 +42,8 @@ internal class StringStorageLayer(): StorageLayer<String> {
 }
 
 class SnakeYamlStorageLayer(): StorageLayer<File> {
-    val yml = Yaml()
+    internal val yml = Yaml(CustomRepresenter(), DumperOptions())
+
     override fun save(obj: Map<String, Any>, loc: File) {
         val out = yml.dumpAsMap(obj)
         println(out)
@@ -47,5 +52,12 @@ class SnakeYamlStorageLayer(): StorageLayer<File> {
 
     override fun load(from: File): Map<String, Any> {
         return yml.load(from.readText())
+    }
+
+    class CustomRepresenter(): Representer(DumperOptions()) {
+        init {
+            val represent = Represent { data -> representSequence(Tag.SEQ, (data as Set<*>).toList(), DumperOptions.FlowStyle.BLOCK) }
+            this.multiRepresenters.put(Set::class.java, represent)
+        }
     }
 }

@@ -1,7 +1,7 @@
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
-import org.yaml.snakeyaml.Yaml
+import kotlin.jvm.java
 import kotlin.random.Random
 import kotlin.test.assertEquals
 
@@ -14,17 +14,8 @@ class TestMapper {
         storageLayer = FakeYmlStorageLayer()
     }
 
-    @Test fun testSimpleSerialise() {
-        val test = TestObject.default
-
-        storageLayer.save(Deyaml.deserialise(test), null)
-        assertEquals(storageLayer.ymlstring.trim(), TestObject.defaultYML)
-    }
-
-    @Test fun testSimpleLoad() {
-        val map = storageLayer.load(TestObject.defaultYML)
-
-        assertEquals(TestObject.default, Deyaml.load(map, TestObject::class))
+    @Test fun testSimpleObject() {
+        testIO(TestObject.default, TestObject.defaultYML)
     }
 
     @Test fun testLoadNonConstructorFields() {
@@ -42,56 +33,64 @@ class TestMapper {
         assertDoesNotThrow { Deyaml.load(map, TestObject::class) }
     }
 
-    @Test fun testLists() {
-        testIterable(TestIterables(listOf("Alex", "Dawson")))
-    }
-    
-    @Test fun testSets() {
-        testIterable(TestIterables(setOf("Alex", "Dawson")))
-    }
-    
-    @Test fun testArrays() {
-        val obj = TestArrays("Steve", arrayOf("Dawson", "Alex"))
-        val expectedyml = """
-            name: Steve
-            children:
-            - Dawson
-            - Alex
+    @Test fun testCollections() {
+        val yml = """
+            list:
+            - 1
+            - 2
+            set:
+            - 3
+            - 4
+            array:
+            - '5'
+            - '6'
+            arrayints:
+            - 7
+            - 8
+            intarray:
+            - 9
+            - 10
         """.trimIndent()
-        
+        testIO(TestCollections(listOf(1, 2), setOf(3, 4), arrayOf("5", "6"), arrayOf(7, 8), intArrayOf(9, 10)), yml)
+    }
+
+//    @Test fun testTopLevelMaps() {}
+//    @Test fun testMapsAsParameters() {}
+
+
+
+    inline fun <reified T : Any> testIO(obj: T, expectedYml: String) {
         storageLayer.save(Deyaml.deserialise(obj), null)
-        assertEquals(expectedyml, storageLayer.ymlstring.trim())
+        assertEquals(expectedYml, storageLayer.ymlstring.trim())
 
         val map = storageLayer.load(null)
-        assertEquals(obj, Deyaml.load(map, TestArrays::class))
+        assertEquals(obj, Deyaml.load(map, T::class))
     }
 
-    fun <T : Collection<String>> testIterable(obj: TestIterables<T>) {
-        // Note the indentation of the children.
-        val expectedyml = """
-            children:
-            - Alex
-            - Dawson
-        """.trimIndent()
-        
-        storageLayer.save(Deyaml.deserialise(obj), null)
-        assertEquals(expectedyml, storageLayer.ymlstring.trim())
+    class TestCollections(
+        val list: List<Int>,
+        val set: Set<Int>,
+        val array: Array<String>,
+        val arrayints: Array<Int>,
+        val intarray: IntArray
+    ) {
 
-        val map = storageLayer.load(null)
-        assertEquals(obj, Deyaml.load(map, TestIterables::class))
-    }
-
-
-    class FakeYmlStorageLayer(): StorageLayer<String?> {
-        val yml = Yaml()
-        var ymlstring: String = ""
-
-        override fun save(obj: Map<String, Any>, loc: String?) {
-            ymlstring = loc ?: yml.dumpAsMap(obj)
+        override fun equals(other: Any?): Boolean {
+            if (other !is TestCollections) return false
+            return list == other.list
+                    && set == other.set
+                    && array.contentEquals(other.array)
+                    && arrayints.contentEquals(other.arrayints)
+                    && intarray.contentEquals(other.intarray)
         }
 
-        override fun load(from: String?): Map<String, Any> {
-            return yml.load(from ?: ymlstring)
+        override fun hashCode(): Int {
+            var result = list.hashCode()
+            result = 31 * result + set.hashCode()
+            result = 31 * result + array.contentHashCode()
+            result = 31 * result + arrayints.contentHashCode()
+            result = 31 * result + intarray.contentHashCode()
+            return result
         }
     }
     data class TestObject(val name: String, val age: Int, var mutableProperty: Int = Random.nextInt(100)) {
@@ -108,19 +107,18 @@ class TestMapper {
         var regularField: String = "Jolly Good"
     }
 
-    data class TestIterables<T: Collection<String>>(val children: T)
-    data class TestArrays(val name: String, val children: Array<String>) {
+    class FakeYmlStorageLayer(): StorageLayer<String?> {
+        val yml = SnakeYamlStorageLayer().yml
+        var ymlstring: String = ""
 
-        override fun equals(other: Any?): Boolean {
-            return if (other !is TestArrays) false
-            else other.name == name &&  children.contentEquals(other.children)
+        override fun save(obj: Map<String, Any>, loc: String?) {
+            ymlstring = loc ?: yml.dumpAsMap(obj)
         }
 
-        override fun hashCode(): Int {
-            var result = name.hashCode()
-            result = 31 * result + children.contentHashCode()
-            return result
+        override fun load(from: String?): Map<String, Any> {
+            return yml.load(from ?: ymlstring)
         }
     }
+
 
 }

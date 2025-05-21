@@ -6,4 +6,14 @@ This project will serve a simple purpose and offer a simple and reliable solutio
 
 # Usage
 
-Don't know yet...
+- Serialisation must be performed on a data class, or class of similar form (with an open/empty constructor consisting of all vals/vars).
+- It may work on other objects such as collections or classes with different forms, however these are not yet officially supported.
+- Support for generic types is limited.
+
+example of objects that do work: 
+```kt
+data class Config(val version: Int, val names: List<String>)
+// OR
+class Config(val version: Int, val names: List<String>)
+// etc. 
+```
