@@ -46,7 +46,6 @@ class SnakeYamlStorageLayer(): StorageLayer<File> {
 
     override fun save(obj: Map<String, Any>, loc: File) {
         val out = yml.dumpAsMap(obj)
-        println(out)
         loc.writeText(out)
     }
 
