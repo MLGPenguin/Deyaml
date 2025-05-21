@@ -1,6 +1,7 @@
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
+import org.junit.jupiter.api.assertThrows
 import kotlin.random.Random
 import kotlin.test.assertEquals
 
@@ -32,7 +33,7 @@ class TestMapper {
         assertDoesNotThrow { Deyaml.load(map, TestObject::class) }
     }
 
-    @Test fun testNonNestedCollections() {
+    @Test fun testNestedCollectionsWithPrimitives() {
         val yml = """
             list:
             - 1
@@ -53,7 +54,15 @@ class TestMapper {
         testIO(TestCollections(listOf(1, 2), setOf(3, 4), arrayOf("5", "6"), arrayOf(7, 8), intArrayOf(9, 10)), yml)
     }
 
-    @Test fun testNonNestedMapsAsParameters() {
+    @Test fun testTopLevelCollections() {
+        assertThrows<IllegalArgumentException> { Deyaml.deserialise(listOf(1,2,3)) }
+    }
+
+    @Test fun testSerialiseNullFields() {
+        testIO(BasicObject("basic object", null), "name: basic object")
+    }
+
+    @Test fun testMapsAsParameters() {
         val yml = """
             map:
               a: 1
@@ -62,10 +71,11 @@ class TestMapper {
         testIO(TestMaps(mapOf("a" to 1, "b" to 2)), yml)
     }
 
-    @Test fun testTopLevelNonNestedMaps() {
+    @Test fun testTopLevelMapsWithPrimitives() {
         testIO(mapOf("a" to 1, "b" to 2), "a: 1\nb: 2")
     }
 
+    data class BasicObject(val name: String, val meta: Int?)
 
     inline fun <reified T : Any> testIO(obj: T, expectedYml: String) {
         storageLayer.save(Deyaml.deserialise(obj), null)

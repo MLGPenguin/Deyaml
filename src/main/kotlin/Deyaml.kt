@@ -11,7 +11,6 @@ object Deyaml { // TODO: Convert to class with storage layer property
 
     /* TODO: stuff
         - Nested Objects
-        - Maps
         - Nested Lists in Maps of Objects? (Map<String, List<Object>>) - Recursion :pensive:
         - Nested Sets D: (Map<String, Set<*>>)
         - Bukkit Storage Layer (compileonly & testimpl)
@@ -74,6 +73,8 @@ object Deyaml { // TODO: Convert to class with storage layer property
     }
 
     fun <T: Any> deserialise(obj: T): Map<String, Any> {
+        if (obj is Collection<*>) throw IllegalArgumentException("Cannot deserialise a Collection! Please use a declaring object instead")
+
         val fields = obj::class.java.declaredFields
         val constructorArgs = obj::class.constructors.first().parameters.map { it.name }
         val map = mutableMapOf<String, Any>()
@@ -89,7 +90,7 @@ object Deyaml { // TODO: Convert to class with storage layer property
             if (field.name !in constructorArgs && Modifier.isFinal(field.modifiers)) continue
 
             field.withAccessible {
-                map[field.name] = field.get(obj)!! // ?: TODO: I forgot but it's surely something
+                map[field.name] = field.get(obj) ?: return@withAccessible // Omit null fields, they will be automatically inferred.
             }
         }
 
