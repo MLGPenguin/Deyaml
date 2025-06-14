@@ -39,8 +39,8 @@ class TestMapper {
             - 1
             - 2
             set:
-            - 3
-            - 4
+            - 3.0
+            - 4.0
             array:
             - '5'
             - '6'
@@ -51,7 +51,7 @@ class TestMapper {
             - 9
             - 10
         """.trimIndent()
-        testIO(TestCollections(listOf(1, 2), setOf(3, 4), arrayOf("5", "6"), arrayOf(7, 8), intArrayOf(9, 10)), yml)
+        testIO(TestCollections(listOf(1, 2), setOf(3.0, 4.0), arrayOf("5", "6"), arrayOf(7, 8), intArrayOf(9, 10)), yml)
     }
 
     @Test fun testTopLevelCollections() {
@@ -75,7 +75,17 @@ class TestMapper {
         testIO(mapOf("a" to 1, "b" to 2), "a: 1\nb: 2")
     }
 
-    data class BasicObject(val name: String, val meta: Int?)
+    @Test fun testFirstLayerNestedObjects() {
+        testIO(TestNesting(listOf(BasicObject("a", 1), BasicObject("b", null)), BasicObject("c", 3)), """
+            objs:
+            - name: a
+              meta: 1
+            - name: b
+            otherObj:
+              name: c
+              meta: 3
+        """.trimIndent())
+    }
 
     inline fun <reified T : Any> testIO(obj: T, expectedYml: String) {
         storageLayer.save(Deyaml.deserialise(obj), null)
@@ -85,9 +95,27 @@ class TestMapper {
         assertEquals(obj, Deyaml.load(map, T::class))
     }
 
+    enum class TestEnums { HEAD, SHOULDERS, KNEES, TOES }
+    data class TestObject(val name: String, val age: Int, var mutableProperty: Int = Random.nextInt(100), val enumTest: TestEnums) {
+        companion object {
+            val default = TestObject("Steve", 41, 20, TestEnums.HEAD)
+            val defaultYML = """
+                name: Steve
+                age: 41
+                mutableProperty: 20
+                enumTest: HEAD
+                regularField: Jolly Good
+            """.trimIndent()
+        }
+        val immutableProperty: String = "Hi!"
+        var regularField: String = "Jolly Good"
+    }
+    data class TestMaps(val map: Map<String, Int>)
+    data class BasicObject(val name: String, val meta: Int?)
+    data class TestNesting(val objs: List<BasicObject>, val otherObj: BasicObject)
     class TestCollections(
         val list: List<Int>,
-        val set: Set<Int>,
+        val set: Set<Double>,
         val array: Array<String>,
         val arrayints: Array<Int>,
         val intarray: IntArray
@@ -111,22 +139,6 @@ class TestMapper {
             return result
         }
     }
-    enum class TestEnums { HEAD, SHOULDERS, KNEES, TOES }
-    data class TestObject(val name: String, val age: Int, var mutableProperty: Int = Random.nextInt(100), val enumTest: TestEnums) {
-        companion object {
-            val default = TestObject("Steve", 41, 20, TestEnums.HEAD)
-            val defaultYML = """
-                name: Steve
-                age: 41
-                mutableProperty: 20
-                enumTest: HEAD
-                regularField: Jolly Good
-            """.trimIndent()
-        }
-        val immutableProperty: String = "Hi!"
-        var regularField: String = "Jolly Good"
-    }
-    data class TestMaps(val map: Map<String, Int>)
 
     class FakeYmlStorageLayer(): StorageLayer<String?> {
         val yml = SnakeYamlStorageLayer().yml

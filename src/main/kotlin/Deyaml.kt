@@ -1,3 +1,4 @@
+import java.lang.constant.ConstantDesc
 import java.lang.reflect.Array
 import java.lang.reflect.Field
 import java.lang.reflect.Modifier
@@ -31,6 +32,17 @@ object Deyaml { // TODO: Convert to class with storage layer property
             if (name == null || !objects.containsKey(name)) return@associateWith null
 
             var value = objects[name]!!
+
+            // Value is a map but clazz is not a map (We know clazz is not map because would have returned already)
+            // * Handle basic nested objects
+            if (value is Map<*, *>) {
+                value = load(value as Map<String, Any>, param.type.jvmErasure)
+            }
+
+            // Handle Objects nested in collections
+            if (value is Collection<*> && value.isNotEmpty() && value.first() is Map<*, *>) {
+                value = value.map { load(it as Map<String, Any>, param.type.arguments.first().type?.jvmErasure!!) }
+            }
 
             // Handle type conversions
             when (param.type.jvmErasure) {
@@ -72,6 +84,8 @@ object Deyaml { // TODO: Convert to class with storage layer property
         return constructed
     }
 
+    private val nonRecursiveTypes = arrayOf(ConstantDesc::class, Collection::class, Map::class)
+
     fun <T: Any> deserialise(obj: T): Map<String, Any> {
         if (obj is Collection<*>) throw IllegalArgumentException("Cannot deserialise a Collection! Please use a declaring object instead")
 
@@ -80,7 +94,7 @@ object Deyaml { // TODO: Convert to class with storage layer property
         val map = mutableMapOf<String, Any>()
 
         if (obj is Map<*, *>) { // TODO: IF first param is a string: all good, otherwise need to register a converter or something? idk
-            if (obj.keys.any { it is String }) { // ASSUME ALL KEYS ARE STRINGS IF ANY MATCH
+            if (obj.keys.first() is String) { // ASSUME ALL KEYS ARE STRINGS IF ANY MATCH
                 return obj as Map<String, Any> // TODO: Reify or put clazz as parameter.
             }
         }
@@ -90,7 +104,23 @@ object Deyaml { // TODO: Convert to class with storage layer property
             if (field.name !in constructorArgs && Modifier.isFinal(field.modifiers)) continue
 
             field.withAccessible {
-                map[field.name] = field.get(obj) ?: return@withAccessible // Omit null fields, they will be automatically inferred.
+                map[field.name] = field.get(obj) ?: return@withAccessible // Get the value - omit null fields, they will be automatically inferred.
+            }
+
+            val javaclass = map[field.name]?.javaClass ?: continue
+
+            when {
+                Collection::class.java.isAssignableFrom(javaclass) -> {
+                    val col = map[field.name] as Collection<*>
+                    if (col.isNotEmpty() && shouldDeserialiseType(col.first()!!.javaClass)) {
+                        map[field.name] = col.map { deserialise(it!!) }
+                    }
+                }
+//                javaclass.isArray -> map[field.name] =
+            }
+
+            if (shouldDeserialiseType(javaclass)) {
+                map[field.name] = deserialise(map[field.name]!!) // Recursively deconstruct objects
             }
         }
 
@@ -106,4 +136,7 @@ object Deyaml { // TODO: Convert to class with storage layer property
         }
     }
 
+    private fun <T: Any> shouldDeserialiseType(clazz: Class<T>): Boolean {
+        return !(clazz.isPrimitive || clazz.isArray || clazz.isEnum || nonRecursiveTypes.any { it.java.isAssignableFrom(clazz) })
+    }
 }
