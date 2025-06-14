@@ -95,20 +95,22 @@ object Deyaml { // TODO: Convert to class with storage layer property
 
         if (obj is Map<*, *>) { // TODO: IF first param is a string: all good, otherwise need to register a converter or something? idk
             if (obj.keys.first() is String) { // ASSUME ALL KEYS ARE STRINGS IF ANY MATCH
-                return obj as Map<String, Any> // TODO: Reify or put clazz as parameter.
+                return obj as Map<String, Any> // TODO: Reify or put clazz as parameter..  Why?
             }
         }
 
         for (field in fields) {
-            // Will not bother to 'remember' (non-constructor) final fields (vals) but will remember vars
+            // Will not bother to 'remember'/save (non-constructor) final fields (vals) but will remember vars
             if (field.name !in constructorArgs && Modifier.isFinal(field.modifiers)) continue
 
+            // Get the value of this field - omit null fields, they will be automatically inferred.
             field.withAccessible {
-                map[field.name] = field.get(obj) ?: return@withAccessible // Get the value - omit null fields, they will be automatically inferred.
+                map[field.name] = field.get(obj) ?: return@withAccessible
             }
 
             val javaclass = map[field.name]?.javaClass ?: continue
 
+            // Manually deserialise certain types to define specific behaviour.
             when {
                 Collection::class.java.isAssignableFrom(javaclass) -> {
                     val col = map[field.name] as Collection<*>
@@ -119,6 +121,7 @@ object Deyaml { // TODO: Convert to class with storage layer property
 //                javaclass.isArray -> map[field.name] =
             }
 
+            // Automatically deserialise any other type that can be deserialised.
             if (shouldDeserialiseType(javaclass)) {
                 map[field.name] = deserialise(map[field.name]!!) // Recursively deconstruct objects
             }
