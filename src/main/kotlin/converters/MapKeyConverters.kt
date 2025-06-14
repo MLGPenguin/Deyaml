@@ -1,7 +1,7 @@
 package converters
 
 object MapKeyConverters {
-    private val registered_converters: MutableMap<Class<*>, MapKeyConverter<*>> = mutableMapOf(Int::class.java to IntConverter())
+    private val registered_converters: MutableMap<Class<*>, MapKeyConverter<*>> = mutableMapOf(Int::class.java to IntConverter(), Integer::class.java to IntConverter())
 
     /** For example: register(Int::class.java, IntConverter()) */
     fun <T> register(convertingType: Class<T>, converter: MapKeyConverter<T>) {
