@@ -1,3 +1,4 @@
+import converters.MapKeyConverters
 import java.lang.constant.ConstantDesc
 import java.lang.reflect.Array
 import java.lang.reflect.Field
@@ -11,7 +12,7 @@ import kotlin.reflect.jvm.jvmErasure
 object Deyaml { // TODO: Convert to class with storage layer property
 
     /* TODO: stuff
-        - Nested Objects
+        - obj(field=Map<String, Object>)
         - Nested Lists in Maps of Objects? (Map<String, List<Object>>) - Recursion :pensive:
         - Nested Sets D: (Map<String, Set<*>>)
         - Bukkit Storage Layer (compileonly & testimpl)
@@ -22,6 +23,8 @@ object Deyaml { // TODO: Convert to class with storage layer property
             // Since objects is a Map<String, Any>, we assume the keys are strings and that the YML lib converted the rest :pray:
             // Definitely going to break once nesting starts :sob:
             return clazz.cast(objects)
+
+            // Just need to get a value instance and recursively load here (.map)
         }
 
         val constructor = clazz.constructors.first()
@@ -87,15 +90,22 @@ object Deyaml { // TODO: Convert to class with storage layer property
     private val nonRecursiveTypes = arrayOf(ConstantDesc::class, Collection::class, Map::class)
 
     fun <T: Any> deserialise(obj: T): Map<String, Any> {
-        if (obj is Collection<*>) throw IllegalArgumentException("Cannot deserialise a Collection! Please use a declaring object instead")
+        // TODO: Just flat??? map to List<Map<String, Any>>
+        if (obj is Collection<*>) throw IllegalArgumentException("Cannot deserialise a Collection yet! Please use a declaring object instead")
 
         val fields = obj::class.java.declaredFields
         val constructorArgs = obj::class.constructors.first().parameters.map { it.name }
         val map = mutableMapOf<String, Any>()
 
         if (obj is Map<*, *>) { // TODO: IF first param is a string: all good, otherwise need to register a converter or something? idk
-            if (obj.keys.first() is String) { // ASSUME ALL KEYS ARE STRINGS IF ANY MATCH
-                return obj as Map<String, Any> // TODO: Reify or put clazz as parameter..  Why?
+            val key = obj.keys.first() ?: throw IllegalArgumentException("Sorry, we don't know how to handle empty maps yet") // TODO: Handle empty maps
+            if (key is String) { // assume all keys match the first one
+                // TODO: Map Values????? :o - this is only if the whole object is a map
+                return obj as Map<String, Any> // TODO: Reify or put clazz as parameter..  Why? (So that we can handle empty maps)
+            } else if (MapKeyConverters.has(key.javaClass)) {
+                val converter = MapKeyConverters.of(obj.javaClass)!!
+                // TODO: Recursion
+                return obj.map { (k, v) -> converter.toString.invoke(obj.javaClass.cast(k)) to v }.toMap() as Map<String, Any>
             }
         }
 
@@ -110,13 +120,30 @@ object Deyaml { // TODO: Convert to class with storage layer property
 
             val javaclass = map[field.name]?.javaClass ?: continue
 
-            // Manually deserialise certain types to define specific behaviour.
+            // Manually deserialise certain types of fields to define specific behaviour.
             when {
+                // Deserialise each element inside the collection individually
                 Collection::class.java.isAssignableFrom(javaclass) -> {
                     val col = map[field.name] as Collection<*>
                     if (col.isNotEmpty() && shouldDeserialiseType(col.first()!!.javaClass)) {
                         map[field.name] = col.map { deserialise(it!!) }
                     }
+                }
+                // Convert Map keys to strings if possible and fully deserialise Map values.
+                Map::class.java.isAssignableFrom(javaclass) -> {
+                    var fieldMap = (map[field.name] as? Map<out Any, Any>)?.takeIf { it.isNotEmpty() } ?: continue
+                    val (k, v) = fieldMap.entries.first()
+
+                    if (k !is String) {
+                        val converter = MapKeyConverters.of(k.javaClass) ?: throw IllegalArgumentException("${k.javaClass.name} is not a valid Map key for deserialisation. Please add a MapKeyConverter")
+                        fieldMap = fieldMap.mapKeys { converter.toString.invoke(it.key) }
+                    }
+
+                    if (shouldDeserialiseType(v.javaClass)) {
+                        fieldMap = fieldMap.mapValues { (_, v) -> deserialise(v) }
+                    }
+
+                    map[field.name] = fieldMap as Map<String, Any>
                 }
 //                javaclass.isArray -> map[field.name] =
             }

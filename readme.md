@@ -17,3 +17,5 @@ data class Config(val version: Int, val names: List<String>)
 class Config(val version: Int, val names: List<String>)
 // etc. 
 ```
+
+Maps, nested or not can only use Int or String keys unless you register a converter 
