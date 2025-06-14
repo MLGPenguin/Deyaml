@@ -11,6 +11,7 @@ class TestMapper {
 
     @BeforeEach
     fun setup() {
+        Deyaml.settings.apply { camelToKebabCaseConverter = false }
         storageLayer = FakeYmlStorageLayer()
     }
 

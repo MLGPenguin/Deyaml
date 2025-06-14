@@ -1,4 +1,4 @@
-package converters
+package adapters
 
 object MapKeyConverters {
     private val registered_converters: MutableMap<Class<*>, MapKeyConverter<*>> = mutableMapOf(Int::class.java to IntConverter(), Integer::class.java to IntConverter())

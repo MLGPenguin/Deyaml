@@ -1,4 +1,4 @@
-import converters.MapKeyConverters
+import adapters.MapKeyConverters
 import java.lang.constant.ConstantDesc
 import java.lang.reflect.Array
 import java.lang.reflect.Field
@@ -18,7 +18,13 @@ object Deyaml { // TODO: Convert to class with storage layer property
         - Bukkit Storage Layer (compileonly & testimpl)
      */
 
+    data class Settings(var camelToKebabCaseConverter: Boolean = false)
+    val settings = Settings()
+
     fun <T: Any> load(objects: Map<String, Any>, clazz: KClass<T>): T {
+        // Handle kebab case converter
+        val objects = objects.mapKeys { (k, _) -> k.toCamelCase() }
+
         if (Map::class.isSuperclassOf(clazz)) {
             // Since objects is a Map<String, Any>, we assume the keys are strings and that the YML lib converted the rest :pray:
             // Definitely going to break once nesting starts :sob:
@@ -154,7 +160,10 @@ object Deyaml { // TODO: Convert to class with storage layer property
             }
         }
 
-        return map
+        // Apply kebab case conversion
+        val finalMap = if (settings.camelToKebabCaseConverter) map.mapKeys { (k, _) -> k.toKebabCase() } else map
+        println(finalMap)
+        return finalMap
     }
 
     private fun Field.withAccessible(func: Field.() -> Unit) {

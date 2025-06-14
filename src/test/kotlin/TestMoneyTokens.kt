@@ -4,7 +4,6 @@ import org.junit.jupiter.api.Test
 class TestMoneyTokens {
 
     /*
-        add a camel<->kebab case converter
         fix map values
      */
 
@@ -18,9 +17,9 @@ class TestMoneyTokens {
         MoneyTokenConfig("money token name", listOf("Insert", "List", "Here"))
     )
     val expectedYML = """
-coinvault-name: Paper Vault
-coinvault-levels:
-  1:
+coin-vault-name: Paper Vault
+coin-vault-levels:
+  '1':
     min: 1
     max: 5
     max-commands: 1
@@ -28,11 +27,14 @@ coinvault-levels:
       1:
         command: this is a command
         chance: 50.0
-  2:
-    coinvault-name: new name!
+  '2':
     min: 10
     max: 20
-
+    coin-vault-name: new name!
+    max-commands: 3
+    commands:
+    - cmd: this is a second command
+      chance: 10.5
 money-token:
   name: money token name
   lore:
@@ -43,6 +45,7 @@ money-token:
 
     @BeforeEach
     fun setup() {
+        Deyaml.settings.apply { camelToKebabCaseConverter = true }
         storageLayer = FakeYmlStorageLayer()
     }
 
@@ -55,12 +58,12 @@ money-token:
     data class CoinVaultConfig(
         val coinVaultName: String,
         val coinVaultLevels: Map<Int, CoinVaultLevel>,
-        val moneyTokens: MoneyTokenConfig
+        val moneyToken: MoneyTokenConfig
     )
 
     data class CoinVaultLevel(
         val range: IntRange,
-        val levelName: String? = null,
+        val coinVaultName: String? = null,
         val maxCommands: Int = 1,
         val commands: List<CoinVaultCommand> = listOf()
     )
