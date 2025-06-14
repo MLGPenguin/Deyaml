@@ -3,6 +3,11 @@ import org.junit.jupiter.api.Test
 
 class TestMoneyTokens {
 
+    /*
+        add a camel<->kebab case converter
+        fix map values
+     */
+
     lateinit var storageLayer: FakeYmlStorageLayer
     val builtConfig = CoinVaultConfig(
         "Paper Vault",
@@ -13,7 +18,7 @@ class TestMoneyTokens {
         MoneyTokenConfig("money token name", listOf("Insert", "List", "Here"))
     )
     val expectedYML = """
-coinvault-name: "Paper Vault"
+coinvault-name: Paper Vault
 coinvault-levels:
   1:
     min: 1
@@ -24,12 +29,12 @@ coinvault-levels:
         command: this is a command
         chance: 50.0
   2:
-    coinvault-name: "new name!"
+    coinvault-name: new name!
     min: 10
     max: 20
 
 money-token:
-  name: "money token name"
+  name: money token name
   lore:
   - Insert
   - List
