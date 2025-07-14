@@ -94,12 +94,20 @@ class TestMapper {
         testIO(TestAdapters(1, 3), "min: 1\nmax: 3")
     }
 
+    @Test fun testDeepNesting() {
+        testIO(MoreNesting(), "nested:\n  range:\n    min: -4\n    max: 100")
+    }
+
     @Test fun testStringAdapters() {
         Deyaml.registerAdapter(TestAdapters::class.java, object: StringAdapter<TestAdapters>(
             { "${it.min}:${it.max}" },
             { it.split(":").let { TestAdapters(it[0].toInt(), it[1].toInt()) } }
         ){})
         testIO(TestAdaptersNonTopLevel(), "range: -4:100")
+    }
+
+    @Test fun testMapWithObjectValues() {
+
     }
 
     inline fun <reified T : Any> testIO(obj: T, expectedYml: String) {
@@ -160,6 +168,12 @@ class TestMapper {
     )
     data class TestAdaptersNonTopLevel(
         val range: TestAdapters = TestAdapters(-4),
+    )
+    data class SomeRange(
+        val range: TestMoneyTokens.Range = TestMoneyTokens.Range(-4, 100)
+    )
+    data class MoreNesting(
+        val nested: SomeRange = SomeRange(),
     )
 
 

@@ -39,7 +39,7 @@ object Deyaml { // TODO: Convert to class with storage layer property
             // Just need to get a value instance and recursively load here (.map)
         }
 
-        val constructor = clazz.constructors.first()
+        val constructor = clazz.constructors.last()
         val constructorParamNames = constructor.parameters.map(KParameter::name)
 
         val args = constructor.parameters.associateWith { param ->
@@ -129,7 +129,6 @@ object Deyaml { // TODO: Convert to class with storage layer property
 
         for (field in fields) {
             // Will not bother to 'remember'/save (non-constructor) final fields (vals) but will remember vars
-            println(constructorArgs)
             if (field.name !in constructorArgs && Modifier.isFinal(field.modifiers)) continue
 
             // Get the value of this field - omit null fields, they will be automatically inferred.
@@ -181,7 +180,7 @@ object Deyaml { // TODO: Convert to class with storage layer property
 
         // Apply kebab case conversion
         val finalMap = if (settings.camelToKebabCaseConverter) map.mapKeys { (k, _) -> k.toKebabCase() } else map
-        println(finalMap)
+        println("${obj::class.java}: $finalMap")
         return finalMap
     }
 
