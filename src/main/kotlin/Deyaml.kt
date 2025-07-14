@@ -123,7 +123,7 @@ object Deyaml { // TODO: Convert to class with storage layer property
             } else if (MapKeyConverters.has(key.javaClass)) {
                 val converter = MapKeyConverters.of(key.javaClass)!!
                 // TODO: Recursion
-                return obj.map { (k, v) -> converter.toString.invoke(key.javaClass.cast(k)) to v }.toMap() as Map<String, Any>
+                return obj.map { (k, v) -> converter.toString.invoke(key.javaClass.cast(k)) to if (shouldDeserialiseType(v!!::class.java)) deserialise(v) else v }.toMap() as Map<String, Any>
             }
         }
 

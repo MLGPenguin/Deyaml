@@ -110,6 +110,10 @@ class TestMapper {
         testIO(mapOf(1 to TestMoneyTokens.Range(1, 2), 2 to TestMoneyTokens.Range(2, 3)), "'1':\n  min: 1\n  max: 2\n'2':\n  min: 2\n  max: 3")
     }
 
+    @Test fun testMapWithPrimitiveValues() {
+        testIO(mapOf(1 to 2, 2 to 4, 4 to 8), "1: 2\n2: 4\n4: 8")
+    }
+
     inline fun <reified T : Any> testIO(obj: T, expectedYml: String) {
         storageLayer.save(Deyaml.deserialise(obj), null)
         assertEquals(expectedYml, storageLayer.ymlstring.trim())
