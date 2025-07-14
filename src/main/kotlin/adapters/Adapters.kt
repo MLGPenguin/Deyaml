@@ -9,9 +9,9 @@ object Adapters {
         registered_adapters.put(convertingType, converter)
     }
 
-    fun <T> unregisterString(type: Class<T>) = registered_adapters.remove(type)
-    fun <T> hasString(type: Class<T>) = registered_adapters.containsKey(type)
-    fun <T> string(type: Class<T>): StringAdapter<T>? = registered_adapters[type] as? StringAdapter<T>
+    fun <T> unregister(type: Class<T>) = registered_adapters.remove(type)
+    fun <T> has(type: Class<T>) = registered_adapters.containsKey(type)
+    fun <T> of(type: Class<T>): StringAdapter<T>? = registered_adapters[type] as? StringAdapter<T>
 }
 
 /** Serialises an entire object into a string for inline adaptations */

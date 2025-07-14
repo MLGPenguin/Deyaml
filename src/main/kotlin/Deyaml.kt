@@ -84,8 +84,8 @@ object Deyaml { // TODO: Convert to class with storage layer property
             }
 
             // Handle String Adapters
-            if (value is String && kclass != String::class.java && Adapters.hasString(kclass.java)) {
-                value = kclass.cast(Adapters.string(kclass.java)!!.fromString.invoke(value))
+            if (value is String && kclass != String::class.java && Adapters.has(kclass.java)) {
+                value = kclass.cast(Adapters.of(kclass.java)!!.fromString.invoke(value))
             }
 
            // // Optional: handle nested deserialization here
@@ -112,7 +112,7 @@ object Deyaml { // TODO: Convert to class with storage layer property
         if (obj is Collection<*>) throw IllegalArgumentException("Cannot deserialise a Collection yet! Please use a declaring object instead")
 
         val fields = obj::class.java.declaredFields
-        val constructorArgs = obj::class.constructors.first().parameters.map { it.name }
+        val constructorArgs = obj::class.constructors.last().parameters.map { it.name }
         val map = mutableMapOf<String, Any>()
 
         if (obj is Map<*, *>) { // TODO: IF first param is a string: all good, otherwise need to register a converter or something? idk
@@ -129,6 +129,7 @@ object Deyaml { // TODO: Convert to class with storage layer property
 
         for (field in fields) {
             // Will not bother to 'remember'/save (non-constructor) final fields (vals) but will remember vars
+            println(constructorArgs)
             if (field.name !in constructorArgs && Modifier.isFinal(field.modifiers)) continue
 
             // Get the value of this field - omit null fields, they will be automatically inferred.
@@ -167,8 +168,8 @@ object Deyaml { // TODO: Convert to class with storage layer property
             }
 
             // Handle String Adapters (Priority over maps)
-            if (Adapters.hasString(javaclass)) {
-                map[field.name] = Adapters.string(javaclass)!!.toString.invoke(map[field.name]!!)
+            if (Adapters.has(javaclass)) {
+                map[field.name] = Adapters.of(javaclass)!!.toString.invoke(map[field.name]!!)
                 continue
             }
 

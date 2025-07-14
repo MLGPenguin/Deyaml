@@ -85,6 +85,6 @@ money-token:
         val min: Int,
         val max: Int
     ) {
-        constructor(range: IntRange): this(range.start, range.endInclusive)
+        constructor(intrange: IntRange): this(intrange.start, intrange.endInclusive)
     }
 }

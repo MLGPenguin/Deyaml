@@ -90,6 +90,10 @@ class TestMapper {
         """.trimIndent())
     }
 
+    @Test fun testInts() {
+        testIO(TestAdapters(1, 3), "min: 1\nmax: 3")
+    }
+
     @Test fun testStringAdapters() {
         Deyaml.registerAdapter(TestAdapters::class.java, object: StringAdapter<TestAdapters>(
             { "${it.min}:${it.max}" },
@@ -151,11 +155,11 @@ class TestMapper {
         }
     }
     data class TestAdapters(
-        val min: Int = -4,
+        val min: Int,
         val max: Int = 100
     )
     data class TestAdaptersNonTopLevel(
-        val range: TestAdapters = TestAdapters(),
+        val range: TestAdapters = TestAdapters(-4),
     )
 
 
