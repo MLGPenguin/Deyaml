@@ -1,3 +1,6 @@
+import adapters.Adapters
+import adapters.IntRangeAdapter
+import adapters.IntRangeMapAdapter
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 
@@ -21,16 +24,17 @@ class TestMoneyTokens {
 coin-vault-name: Paper Vault
 coin-vault-levels:
   '1':
-    min: 1
-    max: 5
+    range:
+      min: 1
+      max: 5
     max-commands: 1
     commands:
-      1:
-        command: this is a command
-        chance: 50.0
+    - cmd: this is a command
+      chance: 50.0
   '2':
-    min: 10
-    max: 20
+    range:
+      min: 10
+      max: 20
     coin-vault-name: new name!
     max-commands: 1
     commands:
@@ -47,7 +51,7 @@ money-token:
     @BeforeEach
     fun setup() {
         Deyaml.settings.apply { camelToKebabCaseConverter = true }
-
+        Deyaml.registerAdapter(IntRange::class.java, IntRangeMapAdapter())
         storageLayer = FakeYmlStorageLayer()
     }
 

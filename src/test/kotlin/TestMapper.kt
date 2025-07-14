@@ -1,3 +1,5 @@
+import adapters.Adapters
+import adapters.StringAdapter
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
@@ -89,7 +91,11 @@ class TestMapper {
     }
 
     @Test fun testStringAdapters() {
-        testIO(TestAdapters(), "range: '-4:15'")
+        Deyaml.registerAdapter(TestAdapters::class.java, object: StringAdapter<TestAdapters>(
+            { "${it.min}:${it.max}" },
+            { it.split(":").let { TestAdapters(it[0].toInt(), it[1].toInt()) } }
+        ){})
+        testIO(TestAdaptersNonTopLevel(), "range: -4:100")
     }
 
     inline fun <reified T : Any> testIO(obj: T, expectedYml: String) {
@@ -145,7 +151,11 @@ class TestMapper {
         }
     }
     data class TestAdapters(
-        val range: IntRange = -4..15
+        val min: Int = -4,
+        val max: Int = 100
+    )
+    data class TestAdaptersNonTopLevel(
+        val range: TestAdapters = TestAdapters(),
     )
 
 

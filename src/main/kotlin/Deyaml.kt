@@ -52,6 +52,10 @@ object Deyaml { // TODO: Convert to class with storage layer property
             // Value is a map but clazz is not a map (We know clazz is not map because would have returned already)
             // * Handle basic nested objects
             if (value is Map<*, *>) {
+                // Handle Map Adapters
+                if (Adapters.hasMap(kclass.java)) {
+                    value = Adapters.map(kclass.java)!!.fromMap.invoke(value as Map<String, Any>)
+                }
                 value = load(value as Map<String, Any>, kclass)
             }
 
@@ -84,7 +88,7 @@ object Deyaml { // TODO: Convert to class with storage layer property
             }
 
             // Handle String Adapters
-            if (value is String && kclass != String::class.java && Adapters.has(kclass.java)) {
+            if (value is String && kclass != String::class.java && Adapters.hasString(kclass.java)) {
                 value = kclass.cast(Adapters.string(kclass.java)!!.fromString.invoke(value))
             }
 
@@ -166,9 +170,16 @@ object Deyaml { // TODO: Convert to class with storage layer property
 //                javaclass.isArray -> map[field.name] =
             }
 
-            // Handle String Adapters
-            if (Adapters.has(javaclass)) {
+            // Handle String Adapters (Priority over maps)
+            if (Adapters.hasString(javaclass)) {
                 map[field.name] = Adapters.string(javaclass)!!.toString.invoke(map[field.name]!!)
+                continue
+            }
+
+            // Handle Map Adapters
+            if (Adapters.hasMap(javaclass)) {
+                map[field.name] = Adapters.map(javaclass)!!.toMap.invoke(map[field.name]!!)
+                continue
             }
 
             // Automatically deserialise any other type that can be deserialised.
