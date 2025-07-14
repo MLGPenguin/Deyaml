@@ -121,9 +121,9 @@ object Deyaml { // TODO: Convert to class with storage layer property
                 // TODO: Map Values????? :o - this is only if the whole object is a map
                 return obj as Map<String, Any> // TODO: Reify or put clazz as parameter..  Why? (So that we can handle empty maps)
             } else if (MapKeyConverters.has(key.javaClass)) {
-                val converter = MapKeyConverters.of(obj.javaClass)!!
+                val converter = MapKeyConverters.of(key.javaClass)!!
                 // TODO: Recursion
-                return obj.map { (k, v) -> converter.toString.invoke(obj.javaClass.cast(k)) to v }.toMap() as Map<String, Any>
+                return obj.map { (k, v) -> converter.toString.invoke(key.javaClass.cast(k)) to v }.toMap() as Map<String, Any>
             }
         }
 

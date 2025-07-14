@@ -106,8 +106,8 @@ class TestMapper {
         testIO(TestAdaptersNonTopLevel(), "range: -4:100")
     }
 
-    @Test fun testMapWithObjectValues() {
-
+    @Test fun testMapWithObjectValuesAndMapConverters() {
+        testIO(mapOf(1 to TestMoneyTokens.Range(1, 2), 2 to TestMoneyTokens.Range(2, 3)), "'1':\n  min: 1\n  max: 2\n'2':\n  min: 2\n  max: 3")
     }
 
     inline fun <reified T : Any> testIO(obj: T, expectedYml: String) {
