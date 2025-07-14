@@ -1,6 +1,6 @@
 import adapters.Adapters
-import adapters.IAdapter
 import adapters.MapKeyConverters
+import adapters.StringAdapter
 import java.lang.constant.ConstantDesc
 import java.lang.reflect.Array
 import java.lang.reflect.Field
@@ -23,7 +23,7 @@ object Deyaml { // TODO: Convert to class with storage layer property
     data class Settings(var camelToKebabCaseConverter: Boolean = false)
     val settings = Settings()
 
-    fun <T> registerAdapter(clazz: Class<T>, adapter: IAdapter<T>) {
+    fun <T> registerAdapter(clazz: Class<T>, adapter: StringAdapter<T>) {
         Adapters.register(clazz, adapter)
     }
 
@@ -52,10 +52,6 @@ object Deyaml { // TODO: Convert to class with storage layer property
             // Value is a map but clazz is not a map (We know clazz is not map because would have returned already)
             // * Handle basic nested objects
             if (value is Map<*, *>) {
-                // Handle Map Adapters
-                if (Adapters.hasMap(kclass.java)) {
-                    value = Adapters.map(kclass.java)!!.fromMap.invoke(value as Map<String, Any>)
-                }
                 value = load(value as Map<String, Any>, kclass)
             }
 
@@ -173,12 +169,6 @@ object Deyaml { // TODO: Convert to class with storage layer property
             // Handle String Adapters (Priority over maps)
             if (Adapters.hasString(javaclass)) {
                 map[field.name] = Adapters.string(javaclass)!!.toString.invoke(map[field.name]!!)
-                continue
-            }
-
-            // Handle Map Adapters
-            if (Adapters.hasMap(javaclass)) {
-                map[field.name] = Adapters.map(javaclass)!!.toMap.invoke(map[field.name]!!)
                 continue
             }
 

@@ -1,8 +1,6 @@
-import adapters.Adapters
-import adapters.IntRangeAdapter
-import adapters.IntRangeMapAdapter
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.w3c.dom.DOMStringList
 
 class TestMoneyTokens {
 
@@ -15,8 +13,8 @@ class TestMoneyTokens {
     val builtConfig = CoinVaultConfig(
         "Paper Vault",
         mapOf(
-            1 to CoinVaultLevel(1..5, null, 1, listOf(CoinVaultCommand("this is a command", 50.0))),
-            2 to CoinVaultLevel(10..20, "new name!", commands = listOf(CoinVaultCommand("this is a second command", 10.5))),
+            1 to CoinVaultLevel(Range(1..5), null, 1, listOf(CoinVaultCommand("this is a command", 50.0))),
+            2 to CoinVaultLevel(Range(10..20), "new name!", commands = listOf(CoinVaultCommand("this is a second command", 10.5))),
         ),
         MoneyTokenConfig("money token name", listOf("Insert", "List", "Here"))
     )
@@ -51,7 +49,6 @@ money-token:
     @BeforeEach
     fun setup() {
         Deyaml.settings.apply { camelToKebabCaseConverter = true }
-        Deyaml.registerAdapter(IntRange::class.java, IntRangeMapAdapter())
         storageLayer = FakeYmlStorageLayer()
     }
 
@@ -68,7 +65,7 @@ money-token:
     )
 
     data class CoinVaultLevel(
-        val range: IntRange,
+        val range: Range,
         val coinVaultName: String? = null,
         val maxCommands: Int = 1,
         val commands: List<CoinVaultCommand> = listOf()
@@ -83,4 +80,11 @@ money-token:
         val name: String,
         val lore: List<String>
     )
+
+    data class Range(
+        val min: Int,
+        val max: Int
+    ) {
+        constructor(range: IntRange): this(range.start, range.endInclusive)
+    }
 }
