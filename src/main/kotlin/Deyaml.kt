@@ -1,3 +1,5 @@
+import adapters.Adapters
+import adapters.IAdapter
 import adapters.MapKeyConverters
 import java.lang.constant.ConstantDesc
 import java.lang.reflect.Array
@@ -21,6 +23,10 @@ object Deyaml { // TODO: Convert to class with storage layer property
     data class Settings(var camelToKebabCaseConverter: Boolean = false)
     val settings = Settings()
 
+    fun <T> registerAdapter(clazz: Class<T>, adapter: IAdapter<T>) {
+        Adapters.register(clazz, adapter)
+    }
+
     fun <T: Any> load(objects: Map<String, Any>, clazz: KClass<T>): T {
         // Handle kebab case converter
         val objects = objects.mapKeys { (k, _) -> k.toCamelCase() }
@@ -40,12 +46,13 @@ object Deyaml { // TODO: Convert to class with storage layer property
             val name = param.name
             if (name == null || !objects.containsKey(name)) return@associateWith null
 
+            val kclass = param.type.jvmErasure
             var value = objects[name]!!
 
             // Value is a map but clazz is not a map (We know clazz is not map because would have returned already)
             // * Handle basic nested objects
             if (value is Map<*, *>) {
-                value = load(value as Map<String, Any>, param.type.jvmErasure)
+                value = load(value as Map<String, Any>, kclass)
             }
 
             // Handle Objects nested in collections
@@ -54,12 +61,12 @@ object Deyaml { // TODO: Convert to class with storage layer property
             }
 
             // Handle type conversions
-            when (param.type.jvmErasure) {
+            when (kclass) {
                 Set::class -> value = (value as List<*>).toSet()
             }
 
             // Handle Arrays being primitive and not holding types :|
-            if (param.type.jvmErasure.java.isArray) {
+            if (kclass.java.isArray) {
                 val componentType = (param.type.classifier as KClass<*>).java.componentType
                 val array = Array.newInstance(componentType, (value as List<*>).size)
                 value.forEachIndexed { index, element -> Array.set(array, index, element) }
@@ -67,8 +74,8 @@ object Deyaml { // TODO: Convert to class with storage layer property
             }
 
             // Handle Enums being unfriendly :(
-            if (param.type.jvmErasure.java.isEnum) {
-                value = param.type.jvmErasure.java.enumConstants.first { (it as Enum<*>).name == value }
+            if (kclass.java.isEnum) {
+                value = kclass.java.enumConstants.first { (it as Enum<*>).name == value }
             }
 
             // Patch for primitive arrays
@@ -76,7 +83,12 @@ object Deyaml { // TODO: Convert to class with storage layer property
                 value = Array<Int>(value.size) { value[it] }
             }
 
-            // Optional: handle nested deserialization here
+            // Handle String Adapters
+            if (value is String && kclass != String::class.java && Adapters.has(kclass.java)) {
+                value = kclass.cast(Adapters.string(kclass.java)!!.fromString.invoke(value))
+            }
+
+           // // Optional: handle nested deserialization here
 
             value
         }
@@ -154,8 +166,13 @@ object Deyaml { // TODO: Convert to class with storage layer property
 //                javaclass.isArray -> map[field.name] =
             }
 
+            // Handle String Adapters
+            if (Adapters.has(javaclass)) {
+                map[field.name] = Adapters.string(javaclass)!!.toString.invoke(map[field.name]!!)
+            }
+
             // Automatically deserialise any other type that can be deserialised.
-            if (shouldDeserialiseType(javaclass)) {
+            else if (shouldDeserialiseType(javaclass)) {
                 map[field.name] = deserialise(map[field.name]!!) // Recursively deconstruct objects
             }
         }

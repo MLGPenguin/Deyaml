@@ -88,6 +88,10 @@ class TestMapper {
         """.trimIndent())
     }
 
+    @Test fun testStringAdapters() {
+        testIO(TestAdapters(), "range: '-4:15'")
+    }
+
     inline fun <reified T : Any> testIO(obj: T, expectedYml: String) {
         storageLayer.save(Deyaml.deserialise(obj), null)
         assertEquals(expectedYml, storageLayer.ymlstring.trim())
@@ -140,6 +144,9 @@ class TestMapper {
             return result
         }
     }
+    data class TestAdapters(
+        val range: IntRange = -4..15
+    )
 
 
 

@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test
 class TestMoneyTokens {
 
     /*
+        fix IntRanges
         fix map values
      */
 
@@ -31,7 +32,7 @@ coin-vault-levels:
     min: 10
     max: 20
     coin-vault-name: new name!
-    max-commands: 3
+    max-commands: 1
     commands:
     - cmd: this is a second command
       chance: 10.5
@@ -46,6 +47,7 @@ money-token:
     @BeforeEach
     fun setup() {
         Deyaml.settings.apply { camelToKebabCaseConverter = true }
+
         storageLayer = FakeYmlStorageLayer()
     }
 
