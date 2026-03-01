@@ -119,7 +119,7 @@ class TestMapper {
 
     inline fun <reified T : Any> testIO(obj: T, expectedYml: String) {
         storageLayer.save(Deyaml.deserialise(obj), null)
-        assertEquals(expectedYml, storageLayer.ymlstring.trim())
+        assertEquals(expectedYml, storageLayer.ymlstring.trim(), "YML CONVERSION INCORRECT")
 
         val map = storageLayer.load(null)
         assertEquals(obj, Deyaml.load<T>(map))
