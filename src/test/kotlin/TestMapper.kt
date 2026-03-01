@@ -122,7 +122,7 @@ class TestMapper {
         assertEquals(expectedYml, storageLayer.ymlstring.trim())
 
         val map = storageLayer.load(null)
-        assertEquals(obj, Deyaml.load(map, T::class))
+        assertEquals(obj, Deyaml.load<T>(map))
     }
 
     enum class TestEnums { HEAD, SHOULDERS, KNEES, TOES }

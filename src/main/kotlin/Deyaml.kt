@@ -5,9 +5,7 @@ import java.lang.constant.ConstantDesc
 import java.lang.reflect.Array
 import java.lang.reflect.Field
 import java.lang.reflect.Modifier
-import kotlin.reflect.KClass
-import kotlin.reflect.KParameter
-import kotlin.reflect.cast
+import kotlin.reflect.*
 import kotlin.reflect.full.isSuperclassOf
 import kotlin.reflect.full.starProjectedType
 import kotlin.reflect.jvm.jvmErasure
@@ -28,22 +26,28 @@ object Deyaml { // TODO: Convert to class with storage layer property
         Adapters.register(clazz, adapter)
     }
 
-    fun <T: Any> load(objects: Map<String, Any>, clazz: KClass<T>): T {
+    inline fun <reified T: Any> load(objects: Map<String, Any>): T = load(objects, typeOf<T>())
+
+    fun <T: Any> load(objects: Map<String, Any>, clazz: KClass<T>): T = load(objects, clazz.starProjectedType)
+
+    @Suppress("UNCHECKED_CAST")
+    fun <T: Any> load(objects: Map<String, Any>, type: KType): T {
+        val clazz = type.jvmErasure as KClass<T>
         // Handle kebab case converter
         val objects = objects.mapKeys { (k, _) -> k.toCamelCase() }
 
         if (Map::class.isSuperclassOf(clazz)) {
             // Since objects is a Map<String, Any>, we assume the keys are strings and that the YML lib converted the rest :pray:
             // Definitely going to break once nesting starts :sob:
-            // Can later add support for non primitive keys.
-            // todo: This does not work because this gets the K and V from the map interface, not from runtime.
-            val (kclazz, vclazz) =clazz.typeParameters.map { it.starProjectedType.jvmErasure }
+            val ktype = type.arguments.getOrNull(0)?.type
+            val vtype = type.arguments.getOrNull(1)?.type
             val randomv = objects.values.first()
             val isNested = randomv is Map<*, *>
+            // Manually convert key-type TODO: Currently only supports strings & ints - implement into MapKeyAdapters
+            val transformKey: (String) -> Any  = { k: String -> if (ktype == null || ktype.jvmErasure == String::class) k else if (ktype.jvmErasure == Int::class) k.toInt() else k }
 
-            // TODO: THIS IS THE ISSUE THIS RIGHT HERE THIS IS WHY THE TESTS ARENT PASSING
             val newmap = objects.entries.associate { (k, v) ->
-                k to if (isNested) load(v as Map<String, Any>, vclazz) else v
+                transformKey(k) to if (isNested && vtype != null) load(v as Map<String, Any>, vtype) else v
             }
 
             return clazz.cast(newmap)
@@ -64,12 +68,12 @@ object Deyaml { // TODO: Convert to class with storage layer property
             // Value is a map but clazz is not a map (We know clazz is not map because would have returned already)
             // * Handle basic nested objects
             if (value is Map<*, *>) {
-                value = load(value as Map<String, Any>, kclass)
+                value = load<Any>(value as Map<String, Any>, param.type)
             }
 
             // Handle Objects nested in collections
             if (value is Collection<*> && value.isNotEmpty() && value.first() is Map<*, *>) {
-                value = value.map { load(it as Map<String, Any>, param.type.arguments.first().type?.jvmErasure!!) }
+                value = value.map { load<Any>(it as Map<String, Any>, param.type.arguments.first().type!!) }
             }
 
             // Handle type conversions
