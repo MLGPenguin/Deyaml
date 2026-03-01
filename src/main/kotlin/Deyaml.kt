@@ -35,16 +35,18 @@ object Deyaml { // TODO: Convert to class with storage layer property
         if (Map::class.isSuperclassOf(clazz)) {
             // Since objects is a Map<String, Any>, we assume the keys are strings and that the YML lib converted the rest :pray:
             // Definitely going to break once nesting starts :sob:
-            val (kclazz, vclazz) = clazz.typeParameters.map { it.starProjectedType.jvmErasure }
+            // Can later add support for non primitive keys.
+            // todo: This does not work because this gets the K and V from the map interface, not from runtime.
+            val (kclazz, vclazz) =clazz.typeParameters.map { it.starProjectedType.jvmErasure }
             val randomv = objects.values.first()
             val isNested = randomv is Map<*, *>
 
             // TODO: THIS IS THE ISSUE THIS RIGHT HERE THIS IS WHY THE TESTS ARENT PASSING
             val newmap = objects.entries.associate { (k, v) ->
-                k to if (isNested) load(v, vclazz) else v
+                k to if (isNested) load(v as Map<String, Any>, vclazz) else v
             }
 
-            return clazz.cast(objects)
+            return clazz.cast(newmap)
 
             // Just need to get a value instance and recursively load here (.map)
         }

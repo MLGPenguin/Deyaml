@@ -1,4 +1,3 @@
-import adapters.Adapters
 import adapters.StringAdapter
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -108,6 +107,10 @@ class TestMapper {
 
     @Test fun testMapWithObjectValuesAndMapConverters() {
         testIO(mapOf(1 to TestMoneyTokens.Range(1, 2), 2 to TestMoneyTokens.Range(2, 3)), "'1':\n  min: 1\n  max: 2\n'2':\n  min: 2\n  max: 3")
+    }
+
+    @Test fun testMapWithStringKeysPrimitiveValues() {
+        testIO(mapOf("1" to 1, "2" to 2), "'1': 1\n'2': 2")
     }
 
     @Test fun testMapWithPrimitiveValues() {
