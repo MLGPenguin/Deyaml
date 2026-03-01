@@ -114,7 +114,7 @@ class TestMapper {
     }
 
     @Test fun testMapWithPrimitiveValues() {
-        testIO(mapOf(1 to 2, 2 to 4, 4 to 8), "1: 2\n2: 4\n4: 8")
+        testIO(mapOf(1 to 2, 2 to 4, 4 to 8), "'1': 2\n'2': 4\n'4': 8")
     }
 
     inline fun <reified T : Any> testIO(obj: T, expectedYml: String) {
