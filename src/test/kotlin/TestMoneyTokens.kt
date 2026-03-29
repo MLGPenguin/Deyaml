@@ -46,6 +46,12 @@ money-token:
   - Here
     """.trimIndent()
 
+    val olliConfigExpected = """
+        potatoes: 4
+        carrots: 5
+        dogsname: sauce
+    """.trimIndent()
+
     @BeforeEach
     fun setup() {
         Deyaml.settings.apply { camelToKebabCaseConverter = true }
@@ -56,6 +62,14 @@ money-token:
     fun testMoneyTokens() {
         testIO(storageLayer, builtConfig, expectedYML)
     }
+
+    @Test
+    fun testOlli() {
+        testIO(storageLayer, OlliConfig(4, 5, "sauce"), olliConfigExpected)
+    }
+
+
+    data class OlliConfig(val potatoes: Int, val carrots: Int, val dogsname: String)
 
 
     data class CoinVaultConfig(
