@@ -1,3 +1,4 @@
+import org.bukkit.configuration.file.YamlConfiguration
 import org.yaml.snakeyaml.DumperOptions
 import org.yaml.snakeyaml.LoaderOptions
 import org.yaml.snakeyaml.Yaml
@@ -67,4 +68,18 @@ class SnakeYamlStorageLayer(): StorageLayer<File> {
     }
 
     class CustomConstructor : Constructor(LoaderOptions()) {}
+}
+
+
+class BukkitStorageLayer(): StorageLayer<File> {
+    override fun save(obj: Map<String, Any>, loc: File) {
+        val cfg = YamlConfiguration.loadConfiguration(loc)
+        cfg.set("", obj)
+        cfg.save(loc)
+    }
+
+    override fun load(from: File): Map<String, Any> {
+        val cfg = YamlConfiguration.loadConfiguration(from)
+        return cfg.getValues(true)
+    }
 }
