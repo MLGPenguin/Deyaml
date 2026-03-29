@@ -8,6 +8,7 @@ dependencies {
 
     testFixturesImplementation(kotlin("test"))
     testFixturesImplementation("org.junit.jupiter:junit-jupiter-api:5.10.0")
+    testFixturesImplementation("org.yaml:snakeyaml:2.4")
 
     testImplementation(kotlin("test"))
 }

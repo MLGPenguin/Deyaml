@@ -7,6 +7,8 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
 import org.junit.jupiter.api.assertThrows
+import org.junit.jupiter.api.io.TempDir
+import java.io.File
 import kotlin.random.Random
 import kotlin.test.assertEquals
 
@@ -17,6 +19,11 @@ import kotlin.test.assertEquals
  * Subclasses inherit all tests and can add storage-specific assertions on top.
  */
 abstract class AbstractDeyamlTest {
+
+    @TempDir
+    lateinit var tempDir: File
+
+    private fun tempFile(name: String = "base-test.yml") = File(tempDir, name).also { it.createNewFile() }
 
     @BeforeEach
     fun resetSettings() {
@@ -29,13 +36,21 @@ abstract class AbstractDeyamlTest {
     }
 
     /** Serialises [obj] to a map and loads it back, asserting full equality. */
-    protected inline fun <reified T : Any> testRoundtrip(obj: T): T {
-//        val layer = VirtualStorageLayer()
-//        layer.save(Deyaml.deserialise(obj), null)
-//        return Deyaml.load(layer.load(null))
-        val map = Deyaml.deserialise(obj)
-        return Deyaml.load<T>(map)
+    private inline fun <reified T : Any> testRoundtrip(obj: T): T {
+        val layer = SnakeYamlStorageLayer()
+        layer.save(Deyaml.deserialise(obj), tempFile())
+        return Deyaml.load(layer.load(tempFile()))
+        // Don't do this because it keeps type info in memory, biasing tests.
+//        val map = Deyaml.deserialise(obj)
+//        return Deyaml.load<T>(map)
     }
+
+//    @Test fun testEnums() {
+//        val enum = TestEnums.HEAD
+//        assertEquals(enum, testRoundtrip(enum))
+//        val enumList = listOf(TestEnums.HEAD, TestEnums.SHOULDERS)
+//        assertEquals(enumList, testRoundtrip(enumList))
+//    }
 
     @Test fun testSimpleObject() {
         assertEquals(TestObject.default, testRoundtrip(TestObject.default))

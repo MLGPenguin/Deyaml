@@ -5,8 +5,9 @@ interface StorageLayer<T> {
     fun load(from: T): Map<String, Any>
 }
 
-class VirtualStorageLayer : StorageLayer<Nothing?> {
-    var objects: Map<String, Any> = emptyMap()
-    override fun save(obj: Map<String, Any>, loc: Nothing?) { objects = obj }
-    override fun load(from: Nothing?): Map<String, Any> = objects
-}
+// Storing items virtually retains type info I dont want.
+//class VirtualStorageLayer : StorageLayer<Nothing?> {
+//    var objects: Map<String, Any> = emptyMap()
+//    override fun save(obj: Map<String, Any>, loc: Nothing?) { objects = obj }
+//    override fun load(from: Nothing?): Map<String, Any> = objects
+//}
