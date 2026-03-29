@@ -21,7 +21,7 @@ import kotlin.test.assertEquals
 abstract class AbstractDeyamlTest {
 
     @TempDir
-    lateinit var tempDir: File
+    private lateinit var tempDir: File
 
     private fun tempFile(name: String = "base-test.yml") = File(tempDir, name).also { it.createNewFile() }
 

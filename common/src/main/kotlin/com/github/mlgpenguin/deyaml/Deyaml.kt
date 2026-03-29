@@ -90,10 +90,10 @@ object Deyaml {
                 value = array
             }
 
-            // Handle Enums being unfriendly :( ## Update: They're friendly now for some reason.
-//            if (kclass.java.isEnum) {
-//                value = kclass.java.enumConstants.first { (it as Enum<*>).name == value }
-//            }
+            // Handle Enums being unfriendly :(
+            if (kclass.java.isEnum) {
+                value = kclass.java.enumConstants.first { (it as Enum<*>).name == value }
+            }
 
             // Patch for primitive arrays
             if (value is IntArray && param.type.arguments.isNotEmpty()) {

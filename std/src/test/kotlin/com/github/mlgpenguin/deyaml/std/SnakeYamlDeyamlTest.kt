@@ -27,7 +27,7 @@ class SnakeYamlDeyamlTest : AbstractDeyamlTest() {
         storage.save(demap, "")
         assertEquals(expectedYml, storage.ymlString.trim(), "YAML output mismatch")
         // Test Serialiser
-        assertEquals(obj, Deyaml.load<T>(demap))
+        assertEquals(obj, Deyaml.load<T>(storage.load("")))
     }
 
     @Test fun testSimpleObjectYaml() {
