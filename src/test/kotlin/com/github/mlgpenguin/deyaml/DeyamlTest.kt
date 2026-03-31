@@ -2,8 +2,14 @@ package com.github.mlgpenguin.deyaml
 
 import com.github.mlgpenguin.deyaml.adapters.Adapters
 import com.github.mlgpenguin.deyaml.adapters.StringAdapter
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.assertDoesNotThrow
+import org.junit.jupiter.api.assertThrows
+import org.junit.jupiter.api.io.TempDir
 import java.io.File
 import kotlin.random.Random
+import kotlin.test.Test
 import kotlin.test.assertEquals
 
 /**
@@ -12,7 +18,7 @@ import kotlin.test.assertEquals
  *
  * Subclasses inherit all tests and can add storage-specific assertions on top.
  */
-abstract class AbstractDeyamlTest {
+class DeyamlTest {
 
     @TempDir
     lateinit var absTempDir: File
@@ -46,7 +52,8 @@ abstract class AbstractDeyamlTest {
 //        assertEquals(enumList, testRoundtrip(enumList))
 //    }
 
-    @Test fun testSimpleObject() {
+    @Test
+    fun testSimpleObject() {
         assertEquals(TestObject.default, testRoundtrip(TestObject.default))
     }
 

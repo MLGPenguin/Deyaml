@@ -1,5 +1,12 @@
 package com.github.mlgpenguin.deyaml
 
+import org.yaml.snakeyaml.DumperOptions
+import org.yaml.snakeyaml.LoaderOptions
+import org.yaml.snakeyaml.Yaml
+import org.yaml.snakeyaml.constructor.Constructor
+import org.yaml.snakeyaml.nodes.Tag
+import org.yaml.snakeyaml.representer.Represent
+import org.yaml.snakeyaml.representer.Representer
 import java.io.File
 
 interface StorageLayer<T> {
@@ -14,23 +21,23 @@ interface StorageLayer<T> {
 //    override fun load(from: Nothing?): Map<String, Any> = objects
 //}
 
-class BukkitStorageLayer : StorageLayer<File> {
-    override fun save(obj: Map<String, Any>, loc: File) {
-        // Can probably just use SnakeYaml here which simplifies this a lot since it's included in paper, and used under the hood..
-        val cfg = YamlConfiguration.loadConfiguration(loc)
-        obj.entries.forEach { (key, value) ->
-            var set = value
-            if (value.javaClass.isEnum) set = value.toString()
-            cfg.set(key, set)
-        }
-        cfg.save(loc)
-    }
-
-    override fun load(from: File): Map<String, Any> {
-        val cfg = YamlConfiguration.loadConfiguration(from)
-        return cfg.getValues(true)
-    }
-}
+//class BukkitStorageLayer : StorageLayer<File> {
+//    override fun save(obj: Map<String, Any>, loc: File) {
+//        // Can probably just use SnakeYaml here which simplifies this a lot since it's included in paper, and used under the hood..
+//        val cfg = YamlConfiguration.loadConfiguration(loc)
+//        obj.entries.forEach { (key, value) ->
+//            var set = value
+//            if (value.javaClass.isEnum) set = value.toString()
+//            cfg.set(key, set)
+//        }
+//        cfg.save(loc)
+//    }
+//
+//    override fun load(from: File): Map<String, Any> {
+//        val cfg = YamlConfiguration.loadConfiguration(from)
+//        return cfg.getValues(true)
+//    }
+//}
 
 class SnakeYamlStorageLayer : StorageLayer<File> {
     internal val yml = Yaml(CustomRepresenter(), DumperOptions())
