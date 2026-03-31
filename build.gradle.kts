@@ -1,13 +1,23 @@
 plugins {
-    kotlin("jvm") version "2.1.20" apply false
+    kotlin("jvm") version "2.3.0"
 }
 
-subprojects {
-    group = "com.github.mlgpenguin"
-    version = "1.0-SNAPSHOT"
+repositories {
+    mavenCentral()
+}
 
-    repositories {
-        mavenCentral()
-        maven("https://repo.papermc.io/repository/maven-public/")
-    }
+dependencies {
+    implementation(kotlin("reflect"))
+    implementation("org.yaml:snakeyaml:2.4")
+
+    testImplementation(kotlin("test"))
+    testImplementation("org.junit.jupiter:junit-jupiter-api:5.10.0")
+}
+
+tasks.test {
+    useJUnitPlatform()
+}
+
+kotlin {
+    jvmToolchain(21)
 }
