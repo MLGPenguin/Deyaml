@@ -1,5 +1,6 @@
 plugins {
     kotlin("jvm") version "2.3.0"
+    `maven-publish`
 }
 
 repositories {
@@ -21,3 +22,11 @@ tasks.test {
 kotlin {
     jvmToolchain(21)
 }
+
+publishing.publications.create<MavenPublication>("maven") {
+    groupId = "com.github.mlgpenguin"
+    artifactId = "DeYaml"
+//    version = # gradle.properties
+    from(components["java"])
+}
+
