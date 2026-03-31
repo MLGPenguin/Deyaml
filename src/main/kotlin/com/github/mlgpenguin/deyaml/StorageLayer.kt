@@ -43,6 +43,9 @@ class SnakeYamlStorageLayer : StorageLayer<File> {
     internal val yml = Yaml(CustomRepresenter(), DumperOptions())
 
     override fun save(obj: Map<String, Any>, loc: File) {
+        if (!loc.exists()) {
+            System.err.println("[DeYaml] File does not exist: $loc")
+        }
         loc.writeText(yml.dumpAsMap(obj))
     }
 
