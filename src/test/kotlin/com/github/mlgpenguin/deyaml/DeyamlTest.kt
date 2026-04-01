@@ -59,14 +59,14 @@ class DeyamlTest {
 
     @Test fun testLoadNonConstructorFields() {
         val map = mapOf(
-            "name" to "Steve", "age" to 41, "mutableProperty" to 20,
+            "name" to "Steve", "age" to 41, "male" to true, "mutableProperty" to 20,
             "enumTest" to "HEAD", "regularField" to "TEST"
         )
         assertEquals("TEST", Deyaml.load<TestObject>(map).regularField)
     }
 
     @Test fun testObjectsWithDefaultProperties() {
-        val map = mapOf("name" to "Steve", "age" to 41, "enumTest" to "HEAD")
+        val map = mapOf("name" to "Steve", "age" to 41, "enumTest" to "HEAD", "male" to true)
         assertDoesNotThrow { Deyaml.load<TestObject>(map) }
     }
 
@@ -132,14 +132,16 @@ class DeyamlTest {
     data class TestObject(
         val name: String,
         val age: Int,
+        val male: Boolean,
         var mutableProperty: Int = Random.Default.nextInt(100),
         val enumTest: TestEnums
     ) {
         companion object {
-            val default = TestObject("Steve", 41, 20, TestEnums.HEAD)
+            val default = TestObject("Steve", 41, true, 20, TestEnums.HEAD)
             val defaultYml = """
                 name: Steve
                 age: 41
+                male: true
                 mutableProperty: 20
                 enumTest: HEAD
                 regularField: Jolly Good

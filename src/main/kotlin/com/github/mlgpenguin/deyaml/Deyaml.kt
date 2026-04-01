@@ -122,7 +122,7 @@ object Deyaml {
         return constructed
     }
 
-    private val nonRecursiveTypes = arrayOf(ConstantDesc::class, Collection::class, Map::class)
+    private val nonRecursiveTypes = arrayOf(ConstantDesc::class, java.lang.Boolean::class, Collection::class, Map::class)
 
     fun <T: Any> deserialise(obj: T): Map<String, Any> {
         // TODO: Just flat??? map to List<Map<String, Any>>
